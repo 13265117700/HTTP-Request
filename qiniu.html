@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>uploadImage</title>
+</head>
+<body>
+  <input id="upload" type="file" name="fulAvatar">
+  <button id="submit">上传</button>
+  <img id="preview-img" src="">
+  <script src="https://lib.baomitu.com/axios/0.19.0-beta.1/axios.min.js"></script>
+  <script type="text/javascript">
+    const PAGE = {
+      data: {
+        TOKEN_API:'https://www.jevescript.com/api/qiniu-uploadtoken',
+        QINIU_API: 'http://upload-z2.qiniup.com',
+      },
+      init: function() {
+        this.bind();
+      },
+      bind: function() {
+        let button = document.getElementById('submit');
+        button.addEventListener('click',this.AXIOSuploadImage);
+      },
+      AXIOSuploadImage: function() {
+        // 3. 点击按钮判断是否有选择图片
+        let files = document.getElementById('upload').files;
+        let file = files[0];
+        if(!file){
+          console.log('缺少文件');
+          return
+        }
+
+        let domain;
+        let key = 'test/' + Date.now() + '_' + file.name;
+        // 获取 token
+        axios.get(PAGE.data.TOKEN_API)
+          .then( res => {
+            domain = res.data.domain;
+            let token = res.data.token;
+            let formData = new FormData();
+            formData.append('file', file);   // 文件夹
+            formData.append('key', key);     // 在七牛存储中的路径
+            formData.append('token', token); // token
+            // 上传图片
+            return axios.post(PAGE.data.QINIU_API, formData, {
+              headers: {
+                'Content-Type': 'multiple/form-data'
+              }
+            })
+          })
+          .then( res => {
+            let image_url = domain +'/' + res.data.key;
+            console.log(image_url);
+            let previewImg = document.getElementById('preview-img');
+            previewImg.setAttribute('src',image_url);
+          })
+      }
+    }
+
+    PAGE.init();
+  </script>
+</body>
+</html>
